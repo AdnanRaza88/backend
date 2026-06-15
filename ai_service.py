@@ -1,43 +1,33 @@
+from groq import Groq
 import os
 from dotenv import load_dotenv
-from groq import Groq
 
 load_dotenv()
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
-def study_tips(subject, marks_obtained, total_marks, challenges, study_hours, exam_fear):
+def get_ai_response(prompt: str) -> str:
+    try:
+        chat_completion = client.chat.completions.create(
+            messages=[{"role": "user", "content": prompt}],
+            model="llama3-8b-8192",
+            temperature=0.7,
+            max_tokens=500,
+        )
+        return chat_completion.choices[0].message.content.strip()
+    except Exception as e:
+        return f"AI service error: {str(e)}"
+
+def study_tips(subject: str, marks_obtained: float, total_marks: float, challenges: str, study_hours: str, exam_fear: str) -> str:
     percentage = (marks_obtained / total_marks) * 100
-    prompt = f"""
-Student scored {marks_obtained}/{total_marks} ({percentage:.1f}%) in {subject}.
+    prompt = f"""You are an experienced teacher. Student scored {percentage:.1f}% in {subject}.
 Challenges: {challenges}
-Daily study hours: {study_hours}
+Study hours: {study_hours}
 Exam fear: {exam_fear}
-Give 3 practical, encouraging study tips addressing these pain points. Keep concise.
-"""
-    response = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.7,
-        max_tokens=300
-    )
-    return response.choices[0].message.content.strip()
 
-def motivation_quote(percentage):
-    prompt = f"Student scored {percentage:.1f}%. Give a short, powerful motivational quote to boost confidence."
-    response = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.8,
-        max_tokens=100
-    )
-    return response.choices[0].message.content.strip()
+Give 4-5 personalized study tips and a motivational message."""
+    return get_ai_response(prompt)
 
-def improvement_plan(subject, percentage):
-    prompt = f"Student got {percentage:.1f}% in {subject}. Suggest a 7-day improvement plan with 3 simple daily actions."
-    response = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.6,
-        max_tokens=250
-    )
-    return response.choices[0].message.content.strip()
+def overall_analysis(grades) -> str:
+    prompt = f"""Analyze this class performance data: {grades}
+Provide overall class insights, weak subjects, top performers suggestions."""
+    return get_ai_response(prompt)
